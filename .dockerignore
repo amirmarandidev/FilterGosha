@@ -1,0 +1,13 @@
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.git
+.gitignore
+.kilo
+data/
+*.db
+*.db-wal
+*.db-shm
+*.key
+tests/

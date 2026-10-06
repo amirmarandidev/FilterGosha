@@ -11,9 +11,14 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-ENV PORT=8080
-ENV PYTHONUNBUFFERED=1
+RUN mkdir -p /data
 
-EXPOSE 8080 443 8443
+ENV PYTHONUNBUFFERED=1
+ENV PORT=8787
+ENV DATA_DIR=/data
+
+EXPOSE 8787 1080
+
+VOLUME ["/data"]
 
 CMD ["python", "main.py"]

@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  filtergosha:
+    build: .
+    container_name: filtergosha
+    restart: always
+    ports:
+      - "8787:8787"   # پنل وب و ترافیک VLESS (WebSocket, gRPC, XHTTP)
+      - "1080:1080"   # پروکسی SOCKS5
+    environment:
+      - PORT=8787
+      - DATA_DIR=/data
+      - ADMIN_PASSWORD=FilterGoshaKING   # رمز عبور ادمین
+      # - RAILWAY_PUBLIC_DOMAIN=sub.yourdomain.com  # در صورت اتصال دامین
+    volumes:
+      - ./data:/data   # ذخیره دائمی دیتابیس، سکرت‌کی و مصرف‌ها

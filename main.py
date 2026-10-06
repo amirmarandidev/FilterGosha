@@ -179,7 +179,7 @@ def _load_or_create_secret() -> str:
         return secrets.token_urlsafe(32)
 
 CONFIG = {
-    "port": int(os.environ.get("PORT", 8080)),
+    "port": int(os.environ.get("PORT", 8787)),
     "secret": _load_or_create_secret(),
     "host": os.environ.get("RAILWAY_PUBLIC_DOMAIN", "localhost"),
 }
