@@ -327,7 +327,8 @@ async def handle_socks5_tcp(client_reader: asyncio.StreamReader, client_writer: 
 
 async def start_socks5_tcp_server():
     from main import SETTINGS, logger
-    port = int(SETTINGS.get("socks5_port", 1080))
+    import os
+    port = int(os.environ.get("SOCKS5_PORT") or SETTINGS.get("socks5_port", 1081))
     try:
         server = await asyncio.start_server(handle_socks5_tcp, '0.0.0.0', port)
         logger.info(f"SOCKS5 TCP server listening on 0.0.0.0:{port}")

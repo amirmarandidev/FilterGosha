@@ -7,9 +7,10 @@ services:
     restart: always
     ports:
       - "8787:8787"   # پنل وب و ترافیک VLESS (WebSocket, gRPC, XHTTP)
-      - "1080:1080"   # پروکسی SOCKS5
+      - "1081:1081"   # پروکسی SOCKS5
     environment:
       - PORT=8787
+      - SOCKS5_PORT=1081
       - DATA_DIR=/data
       - ADMIN_PASSWORD=FilterGoshaKING   # رمز عبور ادمین
       # - RAILWAY_PUBLIC_DOMAIN=sub.yourdomain.com  # در صورت اتصال دامین

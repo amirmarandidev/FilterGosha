@@ -297,7 +297,7 @@ async def load_state():
                     "fingerprint": "chrome",
                     "alpn": "",
                     "port": 443,
-                    "custom_uri": "socks://{username}@{host}:1080#CustomProxy",
+                    "custom_uri": "socks://{username}@{host}:1081#CustomProxy",
                 },
             ]
             created_link_ids = []
@@ -405,7 +405,7 @@ FINGERPRINTS = ("chrome", "firefox", "safari", "ios", "android", "edge", "360", 
 DEFAULT_FINGERPRINT = "chrome"
 
 DEFAULT_PORT = 443
-ALLOWED_PORTS = (443, 8443, 1080)
+ALLOWED_PORTS = (443, 8443, 1080, 1081)
 
 DEFAULT_SPEED_LIMIT = 0
 
@@ -597,7 +597,7 @@ def vless_link_for_link(link: dict, uid: str, host: str, sub_id: str | None = No
     if proto in ("custom", "socks5", "socks"):
         raw = (link.get("custom_uri") or "").strip()
         if not raw:
-            socks_port = SETTINGS.get("socks5_port", "1080")
+            socks_port = os.environ.get("SOCKS5_PORT") or SETTINGS.get("socks5_port", "1081")
             return f"socks://{sub_username}@{host}:{socks_port}#{quote(full_remark)}"
         return raw.replace("{host}", host).replace("{uuid}", link_uuid).replace("{username}", sub_username)
     return generate_vless_link(
@@ -1637,9 +1637,9 @@ async def make_link(
         protocol = DEFAULT_PROTOCOL
     if protocol in ("socks5", "socks"):
         try:
-            port = int(SETTINGS.get("socks5_port", 1080))
+            port = int(os.environ.get("SOCKS5_PORT") or SETTINGS.get("socks5_port", 1081))
         except (ValueError, TypeError):
-            port = 1080
+            port = 1081
         fragment_packets = ""
         clean_ip = ""
         sni = ""

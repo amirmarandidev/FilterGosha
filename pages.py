@@ -637,7 +637,7 @@ select.inp{appearance:none;cursor:pointer}
       <!-- CUSTOM URI FIELD (Visible when custom protocol selected) -->
       <div class="form-g" id="row-custom-uri" style="display:none">
         <label>لینک کاستوم / URI اختصاصی</label>
-        <input class="inp" id="nl-custom-uri" placeholder="مثلاً: socks://user:pass@{host}:1080#MyCustomProxy">
+        <input class="inp" id="nl-custom-uri" placeholder="مثلاً: socks://user:pass@{host}:1081#MyCustomProxy">
         <div style="font-size:10px;color:var(--t3);margin-top:4px">لینک کاملی که کلاینت دریافت خواهد کرد. امکان استفاده از <code>{host}</code> وجود دارد.</div>
       </div>
 
