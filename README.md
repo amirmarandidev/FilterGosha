@@ -203,7 +203,7 @@ python -m uvicorn main:app --host 0.0.0.0 --port 9890
 
 | متغیر | کاربرد | پیش‌فرض |
 | :--- | :--- | :--- |
-| `ADMIN_PASSWORD` | رمز ورود به پنل | `FilterGoshaKING` |
+| `ADMIN_PASSWORD` | رمز ورود به پنل | `FilterGosha` |
 | `DATA_DIR` | محل نگه‌داری داده‌ها | `/data` |
 | `WORKER_DOMAIN` | دامنه‌ی Cloudflare Worker | خالی |
 | `CLEAN_IP` | آی‌پی تمیز پیش‌فرض کانفیگ‌ها | خالی |

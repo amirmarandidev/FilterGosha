@@ -1,3 +1,92 @@
+# ── Windows / Python 3.14 socketpair fix ───────────────────────────────────────
+# روی ویندوز، asyncio برای ساختِ self-pipe حلقه‌ی رویداد از socket.socketpair()
+# استفاده می‌کند. در پایتون ۳.۱۴ یک بررسی سخت‌گیرانه‌ی آدرسِ طرف مقابل اضافه شده
+# که وقتی ترافیک loopback روی سیستم رهگیری/بازهدایت می‌شود (مثلاً هنگام فعال‌بودن
+# یک VPN/TUN محلی) با ConnectionError: Unexpected peer connection شکست می‌خورد و
+# سرور پیش از اجرای هر کدِ برنامه کرش می‌کند. این شیم به‌جای تکیه بر برابری آدرس،
+# با یک توکن تصادفی طرفین را احراز می‌کند. فقط روی ویندوز و فقط وقتی socketpair
+# بومی در دسترس نیست فعال می‌شود؛ در لینوکس/داکر هیچ تغییری ایجاد نمی‌کند.
+import socket as _socket_mod
+import os as _os_early
+
+
+def _authenticated_socketpair(family=_socket_mod.AF_INET, type=_socket_mod.SOCK_STREAM, proto=0):
+    if family == _socket_mod.AF_INET6:
+        host = "::1"
+    else:
+        family = _socket_mod.AF_INET
+        host = "127.0.0.1"
+    if type != _socket_mod.SOCK_STREAM:
+        raise ValueError("Only SOCK_STREAM socket type is supported")
+
+    lsock = _socket_mod.socket(family, type, proto)
+    try:
+        lsock.bind((host, 0))
+        lsock.listen()
+        addr, port = lsock.getsockname()[:2]
+        csock = _socket_mod.socket(family, type, proto)
+        token = _os_early.urandom(16)
+        try:
+            # اتصالِ غیرمسدودکننده را آغاز می‌کنیم تا بدون ساختِ ترد، accept کنیم.
+            csock.setblocking(False)
+            try:
+                csock.connect((addr, port))
+            except (BlockingIOError, InterruptedError):
+                pass
+
+            lsock.settimeout(5)
+            while True:
+                # accept سه‌راهه‌ی TCP را کامل می‌کند؛ تازه بعد از این می‌توان
+                # روی csock داده فرستاد.
+                ssock, _ = lsock.accept()
+                csock.setblocking(True)
+                ssock.settimeout(5)
+                try:
+                    # توکن از سمت client فرستاده می‌شود و در سمت server خوانده و
+                    # کامل مصرف می‌شود تا هر دو سوکت بدون داده‌ی اضافه بمانند.
+                    csock.sendall(token)
+                    received = ssock.recv(len(token))
+                except OSError:
+                    received = b""
+                if received == token:
+                    ssock.settimeout(None)
+                    csock.setblocking(True)
+                    break
+                # اتصال سرگردان (مثلاً از یک رهگیرِ loopback) — ببند و دوباره تلاش کن.
+                try:
+                    ssock.close()
+                except OSError:
+                    pass
+                # client جدیدی برای تلاش بعدی لازم است.
+                csock.close()
+                csock = _socket_mod.socket(family, type, proto)
+                csock.setblocking(False)
+                try:
+                    csock.connect((addr, port))
+                except (BlockingIOError, InterruptedError):
+                    pass
+        except BaseException:
+            csock.close()
+            raise
+    finally:
+        lsock.close()
+    return ssock, csock
+
+
+if _os_early.name == "nt":
+    # فقط روی ویندوز: socketpair اصلی را نگه می‌داریم و اول همان را امتحان می‌کنیم؛
+    # تنها در صورت شکست (همان باگ ConnectionError پایتون ۳.۱۴) به شیم احرازشده
+    # برمی‌گردیم. این‌طوری محیط‌هایی که socketpair سالم دارند دست‌نخورده می‌مانند.
+    _orig_socketpair = _socket_mod.socketpair
+
+    def _safe_socketpair(family=_socket_mod.AF_INET, type=_socket_mod.SOCK_STREAM, proto=0):
+        try:
+            return _orig_socketpair(family, type, proto)
+        except (ConnectionError, OSError):
+            return _authenticated_socketpair(family, type, proto)
+
+    _socket_mod.socketpair = _safe_socketpair
+
 import asyncio
 import json
 import os
@@ -179,7 +268,7 @@ def _load_or_create_secret() -> str:
         return secrets.token_urlsafe(32)
 
 CONFIG = {
-    "port": int(os.environ.get("PORT", 8787)),
+    "port": int(os.environ.get("PORT", 8780)),
     "secret": _load_or_create_secret(),
     "host": os.environ.get("RAILWAY_PUBLIC_DOMAIN", "localhost"),
 }
@@ -398,7 +487,7 @@ SUBS: dict = {}
 SUBS_LOCK = asyncio.Lock()
 
 # Protocol and configuration standards
-PROTOCOLS = ("vless-grpc", "vless-ws", "xhttp", "socks5", "socks", "custom")
+PROTOCOLS = ("vless-grpc", "vless-ws", "xhttp", "trojan-ws", "socks5", "socks", "custom")
 DEFAULT_PROTOCOL = "vless-grpc"
 
 FINGERPRINTS = ("chrome", "firefox", "safari", "ios", "android", "edge", "360", "qq", "random", "randomized")
@@ -424,7 +513,7 @@ SESSION_TTL = 60 * 60 * 24 * 365
 def hash_password(pw: str) -> str:
     return hashlib.sha256(f"{pw}{CONFIG['secret']}".encode()).hexdigest()
 
-AUTH = {"password_hash": hash_password(os.environ.get("ADMIN_PASSWORD", "FilterGoshaKING"))}
+AUTH = {"password_hash": hash_password(os.environ.get("ADMIN_PASSWORD", "FilterGosha"))}
 SESSIONS: dict = {}
 SESSIONS_LOCK = asyncio.Lock()
 
@@ -585,6 +674,76 @@ def generate_vless_link(
     query = "&".join(f"{k}={quote(str(v), safe='')}" for k, v in params)
     return f"vless://{uuid}@{target_addr}:{port_val}?{query}#{quote(remark)}"
 
+def generate_trojan_link(
+    uuid: str,
+    password: str,
+    host: str,
+    remark: str = "FilterGosha",
+    fingerprint: str | None = None,
+    alpn: str | None = None,
+    port: int | None = None,
+    worker_domain: str | None = None,
+    clean_ip: str | None = None,
+    sni: str | None = None,
+    host_header: str | None = None,
+    fragment_packets: str | None = None,
+    fragment_length: str | None = None,
+    fragment_interval: str | None = None,
+) -> str:
+    """ساخت لینک Trojan روی WebSocket، سازگار با همان مدل TLS-در-لبه‌ی Cloudflare.
+    مسیر WS برابر /trojan/{uuid} است و رمز Trojan همان username اشتراک."""
+    port_val = port or DEFAULT_PORT
+    if port_val not in ALLOWED_PORTS:
+        port_val = DEFAULT_PORT
+
+    w_domain = (worker_domain or SETTINGS.get("worker_domain") or "").strip()
+    c_ip = (clean_ip or SETTINGS.get("clean_ip") or "").strip()
+
+    if c_ip:
+        target_addr = c_ip
+    elif w_domain:
+        target_addr = w_domain
+    else:
+        target_addr = host
+
+    if sni and sni.strip():
+        target_sni = sni.strip()
+    elif w_domain:
+        target_sni = w_domain
+    else:
+        target_sni = host
+
+    if host_header and host_header.strip():
+        target_host = host_header.strip()
+    elif w_domain:
+        target_host = w_domain
+    else:
+        target_host = host
+
+    target_fp = (fingerprint or DEFAULT_FINGERPRINT).strip().lower()
+    target_alpn = alpn.strip() if (alpn and alpn.strip()) else "http/1.1"
+
+    params = [
+        ("security", "tls"),
+        ("sni", target_sni),
+        ("fp", target_fp),
+        ("alpn", target_alpn),
+        ("insecure", "0"),
+        ("allowInsecure", "0"),
+        ("type", "ws"),
+        ("host", target_host),
+        ("path", f"/trojan/{uuid}"),
+    ]
+
+    fg_p = (fragment_packets or "").strip()
+    if fg_p:
+        params.append(("fragment", fg_p))
+        params.append(("fg-len", (fragment_length or "10-20").strip()))
+        params.append(("fg-interval", (fragment_interval or "10-20").strip()))
+
+    query = "&".join(f"{k}={quote(str(v), safe='')}" for k, v in params)
+    return f"trojan://{quote(password, safe='')}@{target_addr}:{port_val}?{query}#{quote(remark)}"
+
 def vless_link_for_link(link: dict, uid: str, host: str, sub_id: str | None = None) -> str:
     proto = link.get("protocol", DEFAULT_PROTOCOL)
     prefix = (SETTINGS.get("remark_prefix") if SETTINGS.get("remark_prefix") is not None else "FilterGosha").strip()
@@ -594,6 +753,24 @@ def vless_link_for_link(link: dict, uid: str, host: str, sub_id: str | None = No
     
     sub_username = SUBS.get(link_uuid, {}).get("username", link_uuid)
     
+    if proto == "trojan-ws":
+        return generate_trojan_link(
+            uuid=link_uuid,
+            password=sub_username,
+            host=host,
+            remark=full_remark,
+            fingerprint=link.get("fingerprint"),
+            alpn=link.get("alpn"),
+            port=link.get("port"),
+            worker_domain=link.get("worker_domain"),
+            clean_ip=link.get("clean_ip"),
+            sni=link.get("sni"),
+            host_header=link.get("host"),
+            fragment_packets=link.get("fragment_packets"),
+            fragment_length=link.get("fragment_length"),
+            fragment_interval=link.get("fragment_interval"),
+        )
+
     if proto in ("custom", "socks5", "socks"):
         raw = (link.get("custom_uri") or "").strip()
         if not raw:
@@ -866,10 +1043,12 @@ def _transport_matches_protocol(transport: str, protocol: str) -> bool:
     if p == "xhttp":
         return "xhttp" in t
     if p == "vless-ws":
-        # "socks5-ws" هم شامل ws است، پس باید صریحاً کنار گذاشته شود
-        return "ws" in t and "socks" not in t
+        # "socks5-ws" و "trojan-ws" هم شامل ws هستند، پس باید صریحاً کنار گذاشته شوند
+        return "ws" in t and "socks" not in t and "trojan" not in t
     if p == "vless-grpc":
         return "grpc" in t
+    if p == "trojan-ws":
+        return "trojan" in t
     return False
 
 def _conn_transport(c: dict) -> str:
@@ -1465,6 +1644,7 @@ async def get_stats(_=Depends(require_auth)):
             "vless_ws": sum(1 for l in snap_links.values() if l.get("protocol") == "vless-ws"),
             "vless_grpc": sum(1 for l in snap_links.values() if l.get("protocol") == "vless-grpc" or not l.get("protocol")),
             "xhttp": sum(1 for l in snap_links.values() if l.get("protocol") == "xhttp"),
+            "trojan_ws": sum(1 for l in snap_links.values() if l.get("protocol") == "trojan-ws"),
             "custom": sum(1 for l in snap_links.values() if l.get("protocol") == "custom"),
         }
     }
@@ -1507,7 +1687,11 @@ async def get_connections(_=Depends(require_auth)):
                     matched_link_label = l.get("label")
                     matched_link_proto = lp
                     break
-                elif "ws" in transport and "ws" in lp:
+                elif "trojan" in transport and "trojan" in lp:
+                    matched_link_label = l.get("label")
+                    matched_link_proto = lp
+                    break
+                elif "ws" in transport and "ws" in lp and "trojan" not in transport and "trojan" not in lp:
                     matched_link_label = l.get("label")
                     matched_link_proto = lp
                     break
@@ -2143,6 +2327,10 @@ app.add_api_websocket_route("/ws/{uuid}", websocket_tunnel)
 from relay_socks5 import handle_socks5_ws
 app.add_api_websocket_route("/socks5/{uuid}", handle_socks5_ws)
 app.add_api_websocket_route("/socks/{uuid}", handle_socks5_ws)
+
+# 3b. Trojan over WebSocket Route
+from relay_trojan import trojan_ws_tunnel
+app.add_api_websocket_route("/trojan/{uuid}", trojan_ws_tunnel)
 
 # 4. XHTTP Ultra Router
 from xhttp_siz10 import router as xhttp_router

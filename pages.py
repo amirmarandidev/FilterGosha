@@ -120,6 +120,15 @@ DASHBOARD_HTML = r"""<!DOCTYPE html>
   --t1:#EFF4FF;--t2:#8AA0C4;--t3:#48577A;
   --sidebar-w:248px;--radius:16px;--shadow:0 12px 40px rgba(0,0,0,0.5);
 }
+/* Custom Scrollbars — تم دارک و نئون زمردی */
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:rgba(6,10,20,0.7);border-radius:10px}
+::-webkit-scrollbar-thumb{background:rgba(16,185,129,0.28);border-radius:10px;border:1px solid rgba(16,185,129,0.12);transition:all .2s}
+::-webkit-scrollbar-thumb:hover{background:rgba(16,185,129,0.6);box-shadow:0 0 10px rgba(16,185,129,0.35)}
+::-webkit-scrollbar-thumb:active{background:var(--accent)}
+::-webkit-scrollbar-corner{background:transparent}
+*{scrollbar-width:thin;scrollbar-color:rgba(16,185,129,0.3) rgba(6,10,20,0.7)}
+
 html,body{min-height:100%;background:var(--bg);color:var(--t1);font-size:13.5px}
 body{display:flex;overflow-x:hidden}
 .sidebar{width:var(--sidebar-w);min-height:100vh;background:var(--bg2);border-left:1px solid var(--card-b);display:flex;flex-direction:column;flex-shrink:0;position:fixed;right:0;top:0;bottom:0;z-index:200;transition:transform .25s cubic-bezier(.4,0,.2,1)}
@@ -190,7 +199,8 @@ select.inp{appearance:none;cursor:pointer}
 .form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:500;align-items:center;justify-content:center;backdrop-filter:blur(6px);padding:20px}
 .modal.open{display:flex}
-.modal-box{background:var(--card);border:1px solid var(--card-b);border-radius:22px;padding:26px;width:100%;max-width:540px;box-shadow:var(--shadow);max-height:90vh;overflow-y:auto}
+.modal-box{background:var(--card);border:1px solid var(--card-b);border-radius:22px;padding:26px;width:100%;max-width:540px;box-shadow:var(--shadow);max-height:90vh;overflow-y:auto;scrollbar-gutter:stable}
+.modal-box.modal-box-lg{max-width:760px}
 .modal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;padding-bottom:14px;border-bottom:1px solid var(--card-b)}
 .modal-title{font-size:15px;font-weight:800;color:var(--t1);display:flex;align-items:center;gap:7px}
 .close-btn{background:none;border:none;color:var(--t3);cursor:pointer;font-size:20px}
@@ -565,7 +575,7 @@ select.inp{appearance:none;cursor:pointer}
 
 <!-- MODAL: LINK -->
 <div class="modal" id="modal-link">
-  <div class="modal-box" style="max-width:580px">
+  <div class="modal-box modal-box-lg" style="max-width:760px">
     <div class="modal-head">
       <div class="modal-title" id="link-modal-title"><i class="ti ti-link"></i> ساخت کانفیگ جدید</div>
       <button class="close-btn" onclick="closeModal('modal-link')"><i class="ti ti-x"></i></button>
@@ -575,37 +585,105 @@ select.inp{appearance:none;cursor:pointer}
 
       <!-- PROTOCOL SELECTOR CARDS -->
       <div class="form-g">
-        <label style="margin-bottom:8px;display:block">پروتکل / ترابرد (Transport)</label>
-        <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(70px, 1fr));gap:6px" id="proto-cards">
+        <label style="margin-bottom:10px;display:flex;align-items:center;justify-content:space-between">
+          <span><i class="ti ti-layers-linked" style="color:var(--accent)"></i> انتخاب پروتکل / ترابرد (Transport)</span>
+          <span style="font-size:10.5px;color:var(--t3);font-weight:500">پروتکل مورد نظر را انتخاب کنید</span>
+        </label>
+        <div class="proto-grid" id="proto-cards">
+          <!-- 1. WebSocket -->
           <div class="proto-card active" data-proto="vless-ws" onclick="selectProto('vless-ws')">
-            <i class="ti ti-wifi" style="font-size:20px;margin-bottom:2px"></i>
-            <div style="font-weight:800;font-size:11px">WebSocket</div>
-            <div style="font-size:8.5px;color:var(--t3);margin-top:1px">ALPN: http/1.1</div>
-            <div style="font-size:8.5px;color:var(--accent2);margin-top:1px">✓ Worker</div>
-          </div>
-          <div class="proto-card" data-proto="vless-grpc" onclick="selectProto('vless-grpc')">
-            <i class="ti ti-route" style="font-size:20px;margin-bottom:2px"></i>
-            <div style="font-weight:800;font-size:11px">gRPC</div>
-            <div style="font-size:8.5px;color:var(--t3);margin-top:1px">ALPN: h2</div>
-            <div style="font-size:8.5px;color:var(--t3);margin-top:1px">Multiplexing</div>
-          </div>
-          <div class="proto-card" data-proto="xhttp" onclick="selectProto('xhttp')">
-            <i class="ti ti-bolt" style="font-size:20px;margin-bottom:2px"></i>
-            <div style="font-weight:800;font-size:11px">XHTTP</div>
-            <div style="font-size:8.5px;color:var(--t3);margin-top:1px">ALPN: http/1.1</div>
-            <div style="font-size:8.5px;color:var(--t3);margin-top:1px">Mode: auto</div>
-          </div>
-                      <div class="proto-card" data-proto="socks5" onclick="selectProto('socks5')">
-              <i class="ti ti-shield-lock" style="font-size:20px;margin-bottom:2px"></i>
-              <div style="font-weight:800;font-size:11px">SOCKS5</div>
-              <div style="font-size:8.5px;color:var(--t3);margin-top:1px">Direct TCP</div>
-              <div style="font-size:8.5px;color:var(--t3);margin-top:1px">Auth: Username</div>
+            <div class="proto-card-top">
+              <div class="proto-icon-wrap"><i class="ti ti-wifi"></i></div>
+              <div class="proto-info">
+                <div class="proto-title">WebSocket</div>
+                <div class="proto-sub">VLESS over WS</div>
+              </div>
+              <div class="proto-radio"><i class="ti ti-check"></i></div>
             </div>
-<div class="proto-card" data-proto="custom" onclick="selectProto('custom')">
-            <i class="ti ti-code" style="font-size:20px;margin-bottom:2px"></i>
-            <div style="font-weight:800;font-size:11px">کاستوم</div>
-            <div style="font-size:8.5px;color:var(--t3);margin-top:1px">SOCKS/Custom</div>
-            <div style="font-size:8.5px;color:var(--accent2);margin-top:1px">خارجی / پروکسی</div>
+            <div class="proto-tags">
+              <span class="proto-tag">ALPN: http/1.1</span>
+              <span class="proto-tag proto-tag-accent">✓ Worker</span>
+            </div>
+          </div>
+
+          <!-- 2. gRPC -->
+          <div class="proto-card" data-proto="vless-grpc" onclick="selectProto('vless-grpc')">
+            <div class="proto-card-top">
+              <div class="proto-icon-wrap"><i class="ti ti-route"></i></div>
+              <div class="proto-info">
+                <div class="proto-title">gRPC</div>
+                <div class="proto-sub">VLESS over gRPC</div>
+              </div>
+              <div class="proto-radio"><i class="ti ti-check"></i></div>
+            </div>
+            <div class="proto-tags">
+              <span class="proto-tag">ALPN: h2</span>
+              <span class="proto-tag">Multiplexing</span>
+            </div>
+          </div>
+
+          <!-- 3. XHTTP -->
+          <div class="proto-card" data-proto="xhttp" onclick="selectProto('xhttp')">
+            <div class="proto-card-top">
+              <div class="proto-icon-wrap"><i class="ti ti-bolt"></i></div>
+              <div class="proto-info">
+                <div class="proto-title">XHTTP</div>
+                <div class="proto-sub">SplitHTTP Auto</div>
+              </div>
+              <div class="proto-radio"><i class="ti ti-check"></i></div>
+            </div>
+            <div class="proto-tags">
+              <span class="proto-tag">ALPN: http/1.1</span>
+              <span class="proto-tag proto-tag-accent">✓ Mode: auto</span>
+            </div>
+          </div>
+
+          <!-- 4. Trojan -->
+          <div class="proto-card" data-proto="trojan-ws" onclick="selectProto('trojan-ws')">
+            <div class="proto-card-top">
+              <div class="proto-icon-wrap"><i class="ti ti-horse"></i></div>
+              <div class="proto-info">
+                <div class="proto-title">Trojan</div>
+                <div class="proto-sub">over WebSocket</div>
+              </div>
+              <div class="proto-radio"><i class="ti ti-check"></i></div>
+            </div>
+            <div class="proto-tags">
+              <span class="proto-tag">ALPN: http/1.1</span>
+              <span class="proto-tag proto-tag-accent">✓ Worker</span>
+            </div>
+          </div>
+
+          <!-- 5. SOCKS5 -->
+          <div class="proto-card" data-proto="socks5" onclick="selectProto('socks5')">
+            <div class="proto-card-top">
+              <div class="proto-icon-wrap"><i class="ti ti-shield-lock"></i></div>
+              <div class="proto-info">
+                <div class="proto-title">SOCKS5</div>
+                <div class="proto-sub">Direct TCP Proxy</div>
+              </div>
+              <div class="proto-radio"><i class="ti ti-check"></i></div>
+            </div>
+            <div class="proto-tags">
+              <span class="proto-tag">Direct TCP</span>
+              <span class="proto-tag">User / Pass</span>
+            </div>
+          </div>
+
+          <!-- 6. Custom -->
+          <div class="proto-card" data-proto="custom" onclick="selectProto('custom')">
+            <div class="proto-card-top">
+              <div class="proto-icon-wrap"><i class="ti ti-code"></i></div>
+              <div class="proto-info">
+                <div class="proto-title">کاستوم</div>
+                <div class="proto-sub">SOCKS / Proxy خارجی</div>
+              </div>
+              <div class="proto-radio"><i class="ti ti-check"></i></div>
+            </div>
+            <div class="proto-tags">
+              <span class="proto-tag">URI اختصاصی</span>
+              <span class="proto-tag proto-tag-accent">لینک دلخواه</span>
+            </div>
           </div>
         </div>
         <input type="hidden" id="nl-proto" value="vless-ws">
@@ -626,6 +704,10 @@ select.inp{appearance:none;cursor:pointer}
         </div>
           <div id="proto-info-xhttp" class="proto-info-item" style="display:none">
           <b><i class="ti ti-info-circle"></i> XHTTP:</b> پروتکل پیشرفته با حالت انتقال خودکار (auto mode). سازگار با Worker.<br>
+          <span style="color:var(--t3)">• ALPN ثابت: <code>http/1.1</code> • Mux: پشتیبانی نمی‌شود • Fragment: قابل فعال‌سازی</span>
+        </div>
+        <div id="proto-info-trojan" class="proto-info-item" style="display:none">
+          <b><i class="ti ti-info-circle"></i> Trojan:</b> پروتکل Trojan روی WebSocket؛ سازگار با Cloudflare Worker و همان مدل TLS در لبه. رمز عبور برابر نام‌کاربری اشتراک است.<br>
           <span style="color:var(--t3)">• ALPN ثابت: <code>http/1.1</code> • Mux: پشتیبانی نمی‌شود • Fragment: قابل فعال‌سازی</span>
         </div>
         <div id="proto-info-custom" class="proto-info-item" style="display:none">
@@ -721,14 +803,134 @@ select.inp{appearance:none;cursor:pointer}
 </div>
 
 <style>
-.proto-card{
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  padding:14px 8px;border-radius:14px;cursor:pointer;transition:all .2s;
-  border:2px solid var(--card-b);background:rgba(0,0,0,0.15);text-align:center;
-  color:var(--t2);
+.proto-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 4px;
 }
-.proto-card:hover{border-color:var(--accent);background:rgba(0,200,120,0.06)}
-.proto-card.active{border-color:var(--accent);background:rgba(0,200,120,0.12);color:var(--t1);box-shadow:0 0 20px rgba(0,200,120,0.15)}
+@media (max-width: 680px) {
+  .proto-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+}
+@media (max-width: 400px) {
+  .proto-grid {
+    grid-template-columns: 1fr;
+    gap: 7px;
+  }
+}
+.proto-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 12px 13px;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all .2s cubic-bezier(.4, 0, .2, 1);
+  border: 1.5px solid var(--card-b);
+  background: rgba(10, 16, 32, 0.45);
+  text-align: right;
+  position: relative;
+  user-select: none;
+  min-height: 84px;
+  gap: 10px;
+}
+.proto-card:hover {
+  border-color: rgba(16, 185, 129, 0.4);
+  background: rgba(16, 185, 129, 0.05);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.35);
+}
+.proto-card.active {
+  border-color: var(--accent);
+  background: linear-gradient(145deg, rgba(16, 185, 129, 0.15), rgba(5, 150, 105, 0.04));
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.16), inset 0 0 12px rgba(16, 185, 129, 0.04);
+}
+.proto-card-top {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+}
+.proto-icon-wrap {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--card-b);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  color: var(--accent);
+  flex-shrink: 0;
+  transition: .2s;
+}
+.proto-card.active .proto-icon-wrap {
+  background: var(--accent-d);
+  border-color: rgba(16, 185, 129, 0.35);
+  color: #34d399;
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.25);
+}
+.proto-info {
+  flex: 1;
+  min-width: 0;
+}
+.proto-title {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--t1);
+  line-height: 1.25;
+}
+.proto-sub {
+  font-size: 9.5px;
+  color: var(--t3);
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.proto-radio {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 1.5px solid var(--card-b);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  color: transparent;
+  flex-shrink: 0;
+  transition: .2s;
+}
+.proto-card.active .proto-radio {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #fff;
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.5);
+}
+.proto-tags {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+.proto-tag {
+  font-size: 9px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--t2);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+.proto-tag-accent {
+  background: rgba(16, 185, 129, 0.1);
+  color: var(--green-t);
+  border-color: rgba(16, 185, 129, 0.2);
+}
 </style>
 
 <!-- MODAL: QR CODE -->
@@ -1508,6 +1710,7 @@ async function loadLinks(){
 function protoChipText(proto){
   if(proto==='vless-ws') return '<span class="badge bg-blue"><i class="ti ti-wifi"></i> VLESS WS</span>';
   if(proto==='xhttp') return '<span class="badge bg-green" style="background:var(--purple-bg);color:var(--purple-t)"><i class="ti ti-bolt"></i> XHTTP Auto</span>';
+  if(proto==='trojan-ws') return '<span class="badge bg-red" style="background:rgba(239,68,68,0.12);color:#FCA5A5"><i class="ti ti-horse-toy"></i> Trojan WS</span>';
   if(proto==='socks5'||proto==='socks') return '<span class="badge bg-amber" style="background:rgba(242,163,61,0.12);color:#F9C988"><i class="ti ti-shield-lock"></i> SOCKS5</span>';
   if(proto==='custom') return '<span class="badge bg-amber" style="background:rgba(242,163,61,0.12);color:#F9C988"><i class="ti ti-code"></i> کاستوم</span>';
   return '<span class="badge bg-green"><i class="ti ti-route"></i> VLESS gRPC</span>';
@@ -1583,6 +1786,7 @@ function selectProto(proto){
   if(proto==='vless-ws') document.getElementById('proto-info-ws').style.display='block';
   else if(proto==='vless-grpc') document.getElementById('proto-info-grpc').style.display='block';
   else if(proto==='xhttp') document.getElementById('proto-info-xhttp').style.display='block';
+  else if(proto==='trojan-ws'){ const trEl=document.getElementById('proto-info-trojan'); if(trEl) trEl.style.display='block'; }
   else if(proto==='socks5'||proto==='socks') {
     const s5El = document.getElementById('proto-info-socks5');
     if(s5El) s5El.style.display='block';
