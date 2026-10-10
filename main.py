@@ -119,7 +119,7 @@ logger = logging.getLogger("FilterGosha")
 from contextlib import asynccontextmanager
 
 IRAN_TZ = ZoneInfo("Asia/Tehran")
-PANEL_VERSION = "1.4.13"
+PANEL_VERSION = "1.8.18"
 
 async def _periodic_state_saver():
     while True:

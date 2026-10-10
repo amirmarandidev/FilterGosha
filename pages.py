@@ -71,7 +71,7 @@ input:focus+.ic{color:var(--accent)}
   <div class="card">
     <div class="brand">
       <div class="brand-img"><img src="/static/img/fg-logo.jpg" alt="FilterGosha"></div>
-      <div><div class="brand-name"><a href="https://t.me/FilterGosha" target="_blank">FilterGosha</a></div><div class="brand-sub">v1.4.13</div></div>
+      <div><div class="brand-name"><a href="https://t.me/FilterGosha" target="_blank">FilterGosha</a></div><div class="brand-sub">v1.8.18</div></div>
     </div>
     <h1>ورود به پنل مدیریت</h1>
     <p class="sub">رمز عبور را برای دسترسی به داشبورد وارد کنید</p>
@@ -348,7 +348,7 @@ select.inp{appearance:none;cursor:pointer}
       <div class="logo-img"><img src="/static/img/fg-logo.jpg" alt="FilterGosha"></div>
       <div class="logo-text">
         <div class="logo-name"><a href="https://t.me/FilterGosha" target="_blank">FilterGosha</a></div>
-        <div class="logo-sub">v1.4.13 · gRPC / WS / XHTTP</div>
+        <div class="logo-sub">v1.8.18 · gRPC / WS / XHTTP</div>
       </div>
     </div>
     <button class="menu-btn close-sb-btn" id="close-sb" title="بستن منو"><i class="ti ti-x"></i></button>
@@ -426,7 +426,7 @@ select.inp{appearance:none;cursor:pointer}
   <!-- DASHBOARD FOOTER -->
   <div class="dash-footer">
     <div><a href="https://t.me/FilterGosha" target="_blank" style="color:var(--accent2);text-decoration:none"><i class="ti ti-brand-telegram"></i> t.me/FilterGosha</a></div>
-    <div>FilterGosha v1.4.13 · Railway</div>
+    <div>FilterGosha v1.8.18 · Railway</div>
   </div>
 </section>
 
