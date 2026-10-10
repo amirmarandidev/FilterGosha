@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="app/static/img/fg-logo.jpg" alt="FilterGosha Logo" width="120" style="border-radius: 24px; margin-bottom: 12px;" />
+
 # فیلترگشا · FilterGosha
 
 **پنل مدیریت اشتراک و کانفیگ، با تمرکز روی پایداری در شبکه‌ی ایران**
@@ -9,6 +11,10 @@
 [![Version](https://img.shields.io/badge/version-1.8.18-10b981?style=flat-square)](#-تاریخ-نسخهها)
 [![Telegram](https://img.shields.io/badge/telegram-@FilterGosha-2CA5E0?style=flat-square&logo=telegram&logoColor=white)](https://t.me/FilterGosha)
 [![License](https://img.shields.io/badge/license-open%20source-6b7280?style=flat-square)](#)
+
+<br/>
+
+**[🇮🇷 راهنمای فارسی (پیش‌فرض)](#فهرست)** • **[🇬🇧 English Documentation](#-filtergosha--english-overview)**
 
 </div>
 
@@ -32,6 +38,7 @@
 - [پرسش‌های پرتکرار](#-پرسشهای-پرتکرار)
 - [تاریخ نسخه‌ها](#-تاریخ-نسخهها)
 - [پشتیبانی](#-پشتیبانی)
+- [English Overview](#-filtergosha--english-overview)
 
 ---
 
@@ -133,7 +140,12 @@ Fragment، آی‌پی تمیز، فینگرپرینت مرورگر و اسکر�
 ```bash
 docker build -t filtergosha .
 
-docker run -d --name filtergosha   -p 9890:9890 -p 1080:1080   -v $(pwd)/data:/data   -e ADMIN_PASSWORD="YourStrongPassword"   --restart unless-stopped   filtergosha
+docker run -d --name filtergosha \
+  -p 9890:9890 -p 1080:1080 \
+  -v $(pwd)/data:/data \
+  -e ADMIN_PASSWORD="YourStrongPassword" \
+  --restart unless-stopped \
+  filtergosha
 ```
 
 </details>
@@ -307,8 +319,106 @@ python -m uvicorn main:app --host 0.0.0.0 --port 9890
 - کانال تلگرام: [@FilterGosha](https://t.me/FilterGosha)
 - گزارش باگ و درخواست قابلیت: [GitHub Issues](https://github.com/thekourox/FilterGosha/issues)
 
+---
+
+<br/>
+<br/>
+
+<div align="center" id="-filtergosha--english-overview">
+
+<img src="app/static/img/fg-logo.jpg" alt="FilterGosha Logo" width="120" style="border-radius: 24px; margin-bottom: 12px;" />
+
+# FilterGosha
+
+**Minimalist Proxy & Subscription Management Panel**
+
+*Forked from [X4G](https://www.youtube.com/@X4GHUB)*
+
+[![Version](https://img.shields.io/badge/version-1.8.18-10b981?style=flat-square)](#)
+[![Telegram](https://img.shields.io/badge/telegram-@FilterGosha-2CA5E0?style=flat-square&logo=telegram&logoColor=white)](https://t.me/FilterGosha)
+[![License](https://img.shields.io/badge/license-open%20source-6b7280?style=flat-square)](#)
+
+<br/>
+
+</div>
+
+> # 📢 English Version Coming Soon!
+> # 🚀 Full English language support will be officially added in **Version 2.0**!
+> **Stay tuned for comprehensive internationalization, English UI options, and complete English guides in the next major milestone.**
+
+---
+
+## 🌐 English Overview
+
+**FilterGosha** is a lightweight, resilient proxy and subscription management panel tailored for personal VPN servers and small-scale subscription distribution under strict network censorship conditions. Built on Python and FastAPI, it eliminates bloated dependencies while delivering robust circumvention mechanisms.
+
+### ✨ Key Features:
+- **Multi-Protocol Relays:** Supports WebSocket, gRPC, XHTTP, Trojan (over WebSocket), and standalone SOCKS5 proxy servers.
+- **Anti-Censorship Toolkit:** Built-in TLS Fragmenting, Clean IP routing, browser TLS fingerprinting emulation (Chrome/Firefox/iOS/Safari/Edge), and ready-to-deploy Cloudflare Worker/Pages scripts.
+- **HWID & Device Binding:** Lock subscriptions to the first $N$ connected devices via header heuristics (`X-HWID` or `User-Agent` fingerprinting) to prevent unauthorized credential sharing.
+- **Dual-Purpose Subscription Links:** A single universal subscription URL that imports seamlessly into clients (*v2rayNG, Hiddify, Sing-Box, NekoBox, Shadowrocket*) or opens directly in web browsers as an interactive user dashboard with remaining data, expiration timers, and QR codes.
+- **Granular Quota & Schedule Management:** Set bandwidth quotas, Jalali (Solar Hijri) and Gregorian expiration dates, concurrent IP limits, and bandwidth speed throttles.
+- **Selective Backup & Restore:** Selectively package and migrate configs, subscriptions, settings, credentials, and usage statistics with duplicate detection.
+
+### 🚀 Quick Start
+
+<details open>
+<summary><b>Option 1: Railway (Easiest Way)</b></summary>
+
+1. **Fork** this repository.
+2. In [Railway.app](https://railway.app), choose **New Project → Deploy from GitHub repo** and select your fork.
+3. Attach a persistent volume to `/data` in the **Volumes** tab (required to keep data across redeploys).
+4. Generate a Public Domain from the **Networking** tab.
+5. Visit `https://your-domain.up.railway.app/login`.
+
+</details>
+
+<details>
+<summary><b>Option 2: Docker</b></summary>
+
+```bash
+docker build -t filtergosha .
+
+docker run -d --name filtergosha \
+  -p 9890:9890 -p 1080:1080 \
+  -v $(pwd)/data:/data \
+  -e ADMIN_PASSWORD="YourStrongPassword" \
+  --restart unless-stopped \
+  filtergosha
+```
+
+</details>
+
+<details>
+<summary><b>Option 3: Direct Run</b></summary>
+
+```bash
+pip install -r requirements.txt
+python -m uvicorn main:app --host 0.0.0.0 --port 9890
+```
+
+</details>
+
+---
+
+### 🔑 Login Credentials
+
+| | |
+| :--- | :--- |
+| **Panel URL** | `https://your-domain.com/login` |
+| **Default Password** | `FilterGosha` |
+
+*Recommendation: Change your default password immediately under Settings → Change Password.*
+
+---
+
+## 📢 Community & Support
+
+- **Telegram Channel:** [@FilterGosha](https://t.me/FilterGosha)
+- **Bug Reports & Feature Requests:** [GitHub Issues](https://github.com/amirmarandidev/FilterGosha/issues)
+
 <div align="center">
 
-اگر این پروژه به کارتان آمد، یک ⭐ روی مخزن بزنید.
+If you find this project helpful, please consider giving it a ⭐ on GitHub!
 
 </div>
