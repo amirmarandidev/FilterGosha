@@ -190,9 +190,9 @@ async def _check_link(uuid: str):
         raise HTTPException(status_code=403, detail="not authorized")
 
 
-async def _get_or_create_session(uuid: str, mode: str, session_id: str, ip: str = "نامشخص") -> dict:
+async def _get_or_create_session(uuid: str, mode: str, session_id: str, ip: str = "نامشخص", headers=None) -> dict:
     """Session بر اساس session_id که خودِ کلاینت در URL فرستاده، lazily ساخته می‌شه."""
-    from main import is_ip_allowed, logger, connections
+    from main import is_ip_allowed, logger, connections, check_hwid_from_headers
     async with XHTTP_LOCK:
         sess = xhttp_sessions.get(session_id)
         if sess is not None:
@@ -202,6 +202,10 @@ async def _get_or_create_session(uuid: str, mode: str, session_id: str, ip: str 
         if not is_ip_allowed(uuid, ip):
             logger.warning(f"🚫 XHTTP[{mode}] rejected uuid={uuid[:8]} ip={ip} (ip limit reached)")
             raise HTTPException(status_code=403, detail="ip limit reached")
+
+        if headers is not None and not check_hwid_from_headers(uuid, headers, ip):
+            logger.warning(f"🚫 XHTTP[{mode}] rejected uuid={uuid[:8]} ip={ip} (hwid limit reached)")
+            raise HTTPException(status_code=403, detail="hwid limit reached")
 
         conn_id = secrets.token_urlsafe(6)
         connections[conn_id] = {
@@ -354,7 +358,7 @@ async def xhttp_downlink(uuid: str, session_id: str, request: Request):
     ensure_reaper()
     await _check_link(uuid)
     fp = request.query_params.get("fp", DEFAULT_FINGERPRINT)
-    sess = await _get_or_create_session(uuid, "auto", session_id, _req_client_ip(request))
+    sess = await _get_or_create_session(uuid, "auto", session_id, _req_client_ip(request), headers=request.headers)
     if sess.get("closed"):
         raise HTTPException(status_code=404, detail="session closed")
 
@@ -367,7 +371,7 @@ async def xhttp_downlink(uuid: str, session_id: str, request: Request):
 async def packet_up_upload(uuid: str, session_id: str, seq: int, request: Request):
     from main import stats, connections, error_logs
     ensure_reaper()
-    sess = await _get_or_create_session(uuid, "packet-up", session_id, _req_client_ip(request))
+    sess = await _get_or_create_session(uuid, "packet-up", session_id, _req_client_ip(request), headers=request.headers)
     await _mark_real_mode(session_id, sess, "packet-up")
     if sess.get("closed"):
         raise HTTPException(status_code=404, detail="session closed")
@@ -431,7 +435,7 @@ async def packet_up_upload(uuid: str, session_id: str, seq: int, request: Reques
 async def stream_up_upload(uuid: str, session_id: str, request: Request):
     from main import stats, connections, error_logs
     ensure_reaper()
-    sess = await _get_or_create_session(uuid, "stream-up", session_id, _req_client_ip(request))
+    sess = await _get_or_create_session(uuid, "stream-up", session_id, _req_client_ip(request), headers=request.headers)
     await _mark_real_mode(session_id, sess, "stream-up")
     if sess.get("closed"):
         raise HTTPException(status_code=404, detail="session closed")

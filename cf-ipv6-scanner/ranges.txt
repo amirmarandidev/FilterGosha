@@ -1,0 +1,16 @@
+# Official Cloudflare IPv6 network ranges.
+# One CIDR per line. Blank lines and lines starting with # are ignored.
+#
+# IMPORTANT note about the ranges being "huge":
+# These ranges are enormous (e.g. ::/32 means 2^96 addresses). Scanning every
+# address is impossible. The scanner therefore samples only a few RANDOM
+# addresses from each range (see --per-range). Scan time depends on the number
+# of samples, not on the size of the range.
+
+2400:cb00::/32
+2606:4700::/32
+2803:f800::/32
+2405:b500::/32
+2405:8100::/32
+2a06:98c0::/29
+2c0f:f248::/32

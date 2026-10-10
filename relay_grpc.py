@@ -73,7 +73,8 @@ def wrap_grpc_frame(payload: bytes) -> bytes:
 async def grpc_tunnel(request: Request):
     from main import (
         LINKS_LOCK, check_and_use, is_ip_allowed, get_speed_limit,
-        stats, error_logs, connections, logger, save_state, log_activity
+        stats, error_logs, connections, logger, save_state, log_activity,
+        check_hwid_from_headers,
     )
 
     ip = _grpc_client_ip(request)
@@ -110,6 +111,11 @@ async def grpc_tunnel(request: Request):
         logger.warning(f"🚫 gRPC rejected uuid={uid[:8]}… ip={ip} (ip limit reached)")
         log_activity("connection", f"اتصال gRPC {ip} با شناسه {uid[:8]} رد شد (محدودیت تعداد آی‌پی)", "warn")
         raise HTTPException(status_code=403, detail="ip limit reached")
+
+    if not check_hwid_from_headers(uid, request.headers, ip):
+        logger.warning(f"🚫 gRPC rejected uuid={uid[:8]}… ip={ip} (hwid limit reached)")
+        log_activity("connection", f"اتصال gRPC {ip} با شناسه {uid[:8]} رد شد (محدودیت تعداد دستگاه)", "warn")
+        raise HTTPException(status_code=403, detail="hwid limit reached")
 
     if not await check_and_use(uid, len(first_chunk)):
         raise HTTPException(status_code=403, detail="quota/disabled")

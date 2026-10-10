@@ -1,12 +1,23 @@
 # pages.py
 
-LOGO_B64 = ""
+import base64
+from pathlib import Path
+
+_STATIC_IMG = Path(__file__).parent / "app" / "static" / "img" / "fg-logo.jpg"
+if _STATIC_IMG.exists():
+    try:
+        LOGO_B64 = f"data:image/jpeg;base64,{base64.b64encode(_STATIC_IMG.read_bytes()).decode('ascii')}"
+    except Exception:
+        LOGO_B64 = "/static/img/fg-logo.jpg"
+else:
+    LOGO_B64 = "/static/img/fg-logo.jpg"
 
 LOGIN_HTML = r"""<!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ورود · FilterGosha</title>
+<link rel="icon" type="image/jpeg" href="/static/img/fg-logo.jpg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@100;200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -59,7 +70,7 @@ input:focus+.ic{color:var(--accent)}
 <div class="wrap">
   <div class="card">
     <div class="brand">
-      <div class="brand-img"></div>
+      <div class="brand-img"><img src="/static/img/fg-logo.jpg" alt="FilterGosha"></div>
       <div><div class="brand-name"><a href="https://t.me/FilterGosha" target="_blank">FilterGosha</a></div><div class="brand-sub">v1.4.13</div></div>
     </div>
     <h1>ورود به پنل مدیریت</h1>
@@ -102,6 +113,7 @@ DASHBOARD_HTML = r"""<!DOCTYPE html>
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>FilterGosha - مدیریت VLESS</title>
+<link rel="icon" type="image/jpeg" href="/static/img/fg-logo.jpg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@100;200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -132,12 +144,16 @@ DASHBOARD_HTML = r"""<!DOCTYPE html>
 html,body{min-height:100%;background:var(--bg);color:var(--t1);font-size:13.5px}
 body{display:flex;overflow-x:hidden}
 .sidebar{width:var(--sidebar-w);min-height:100vh;background:var(--bg2);border-left:1px solid var(--card-b);display:flex;flex-direction:column;flex-shrink:0;position:fixed;right:0;top:0;bottom:0;z-index:200;transition:transform .25s cubic-bezier(.4,0,.2,1)}
-.logo{display:flex;align-items:center;gap:12px;padding:20px 16px 16px;border-bottom:1px solid var(--card-b)}
+.logo{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:16px 14px;border-bottom:1px solid var(--card-b);position:relative}
+.logo-brand{display:flex;align-items:center;gap:10px;min-width:0;flex:1}
 .logo-img{width:38px;height:38px;border-radius:50%;overflow:hidden;border:1px solid var(--card-b);box-shadow:0 0 14px rgba(16,185,129,.35);flex-shrink:0}
-.logo-img img{width:100%;height:100%;object-fit:cover}
-.logo-name{font-size:14px;font-weight:800;color:var(--t1)}
+.logo-img img{width:100%;height:100%;object-fit:cover;display:block}
+.logo-text{min-width:0;flex:1}
+.logo-name{font-size:14px;font-weight:800;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .logo-name a{color:inherit;text-decoration:none}
-.logo-sub{font-size:9.5px;color:var(--accent);font-weight:600}
+.logo-sub{font-size:9.5px;color:var(--accent);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.close-sb-btn{display:none;background:var(--card);border:1px solid var(--card-b);color:var(--t1);width:32px;height:32px;border-radius:9px;align-items:center;justify-content:center;cursor:pointer;font-size:16px;flex-shrink:0;transition:.15s}
+.close-sb-btn:hover{background:var(--red-bg);color:var(--red-t);border-color:rgba(239,68,68,.3)}
 .nav-wrap{flex:1;padding:12px 8px;overflow-y:auto}
 .nav-sec{font-size:9px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.12em;padding:12px 10px 4px}
 .nav-it{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:11px;color:var(--t2);cursor:pointer;font-size:12.5px;font-weight:600;transition:.15s;margin-bottom:2px}
@@ -165,20 +181,20 @@ body{display:flex;overflow-x:hidden}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.25}}
 @keyframes spin{to{transform:rotate(360deg)}}
 .metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:13px;margin-bottom:18px}
-.metric{background:var(--card);border:1px solid var(--card-b);border-radius:18px;padding:18px 20px;box-shadow:var(--shadow);transition:.2s}
+.metric{background:var(--card);border:1px solid var(--card-b);border-radius:18px;padding:18px 20px;box-shadow:var(--shadow);transition:.2s;min-width:0}
 .metric:hover{border-color:var(--card-bh);transform:translateY(-1px)}
 .m-icon{width:36px;height:36px;border-radius:10px;background:var(--accent-d);display:flex;align-items:center;justify-content:center;margin-bottom:11px;color:var(--accent);font-size:18px}
 .m-label{font-size:10px;color:var(--t3);margin-bottom:4px;font-weight:700;text-transform:uppercase;letter-spacing:.05em}
-.m-val{font-size:22px;font-weight:800;color:var(--t1);line-height:1}
-.m-sub{font-size:10px;color:var(--t3);margin-top:6px;display:flex;align-items:center;gap:4px}
-.card{background:var(--card);border:1px solid var(--card-b);border-radius:18px;padding:20px;box-shadow:var(--shadow);margin-bottom:16px}
+.m-val{font-size:22px;font-weight:800;color:var(--t1);line-height:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.m-sub{font-size:10px;color:var(--t3);margin-top:6px;display:flex;align-items:center;gap:4px;flex-wrap:wrap}
+.card{background:var(--card);border:1px solid var(--card-b);border-radius:18px;padding:20px;box-shadow:var(--shadow);margin-bottom:16px;min-width:0}
 .card-title{font-size:13px;font-weight:800;color:var(--t1);margin-bottom:15px;display:flex;align-items:center;gap:7px}
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:13px;margin-bottom:16px}
 .g3{display:grid;grid-template-columns:2fr 1fr;gap:13px;margin-bottom:16px}
-.sr{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(16,185,129,0.06);font-size:12px}
+.sr{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 0;border-bottom:1px solid rgba(16,185,129,0.06);font-size:12px}
 .sr:last-child{border-bottom:none}
-.sr-k{color:var(--t2);display:flex;align-items:center;gap:6px}
-.sr-v{font-weight:700;color:var(--t1)}
+.sr-k{color:var(--t2);display:flex;align-items:center;gap:6px;min-width:0;flex-shrink:1}
+.sr-v{font-weight:700;color:var(--t1);white-space:nowrap;flex-shrink:0}
 .pg{display:none}
 .pg.on{display:block}
 .btn{font-size:12px;font-weight:700;border-radius:10px;padding:8px 16px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;border:none;transition:all .15s;white-space:nowrap}
@@ -213,9 +229,16 @@ select.inp{appearance:none;cursor:pointer}
 .tbl{width:100%;border-collapse:collapse;font-size:12px}
 .tbl th{text-align:right;padding:10px 12px;color:var(--t3);font-size:10px;font-weight:700;text-transform:uppercase;border-bottom:1px solid var(--card-b)}
 .tbl td{padding:12px;border-bottom:1px solid rgba(16,185,129,0.05);color:var(--t1)}
-.tbl tr:hover td{background:var(--accent-d)}
-.sub-card{background:var(--card);border:1px solid var(--card-b);border-radius:18px;padding:18px 20px;margin-bottom:14px;position:relative;overflow:hidden;transition:.2s}
+.sub-card{background:var(--card);border:1px solid var(--card-b);border-radius:18px;padding:18px 20px;margin-bottom:14px;position:relative;overflow:visible;transition:.2s}
 .sub-card:hover{border-color:var(--card-bh);box-shadow:var(--shadow)}
+.icon-action-btn{width:32px;height:32px;padding:0!important;display:inline-flex;align-items:center;justify-content:center;font-size:15px;border-radius:9px;flex-shrink:0;cursor:pointer}
+.action-dropdown{position:relative;display:inline-block}
+.action-menu{position:absolute;top:calc(100% + 6px);left:0;min-width:160px;background:#0c1326;border:1px solid var(--card-bh);border-radius:12px;padding:6px;box-shadow:0 12px 32px rgba(0,0,0,0.65),0 0 1px rgba(16,185,129,0.3);z-index:90;display:none;opacity:0;transform:translateY(-6px);transition:opacity .15s ease,transform .15s ease}
+.action-menu.open{display:block;opacity:1;transform:translateY(0)}
+.action-menu-item{display:flex;align-items:center;gap:9px;width:100%;padding:8px 10px;font-size:11.5px;font-weight:600;color:var(--t1);background:none;border:none;cursor:pointer;text-align:right;border-radius:8px;transition:all .15s;white-space:nowrap}
+.action-menu-item:hover{background:var(--accent-d);color:var(--accent)}
+.action-menu-item i{font-size:15px;color:var(--accent);flex-shrink:0}
+.action-menu-divider{height:1px;background:rgba(16,185,129,0.1);margin:4px 6px}
 .sub-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:12px;flex-wrap:wrap}
 .sub-label{font-size:15px;font-weight:800;color:var(--t1)}
 .sub-links-box{background:rgba(0,0,0,.25);border:1px solid var(--card-b);border-radius:12px;padding:10px 12px;margin-top:10px;font-family:ui-monospace,monospace;font-size:10.5px;color:var(--accent);word-break:break-all}
@@ -252,27 +275,83 @@ select.inp{appearance:none;cursor:pointer}
 @media(prefers-reduced-motion:reduce){.github-btn{animation:none;color:#fff;border-color:rgba(255,255,255,.5);box-shadow:0 0 14px rgba(255,255,255,.25)}}
 .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:180}
 .overlay.open{display:block}
+.dash-charts-grid{display:grid;grid-template-columns:1fr 2fr;gap:14px;margin-bottom:16px}
+.dash-bottom-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px}
+.dash-chart-box{height:200px;position:relative;width:100%}
+.dash-donut-box{height:200px;position:relative;display:flex;align-items:center;justify-content:center;width:100%}
+.dash-footer{display:flex;justify-content:space-between;align-items:center;padding:16px 0;margin-top:20px;border-top:1px solid var(--card-b);font-size:11px;color:var(--t3);flex-wrap:wrap;gap:10px}
+
+@media(max-width:992px){
+  .metrics{grid-template-columns:repeat(2,1fr) !important;gap:12px}
+  .dash-charts-grid{grid-template-columns:1fr !important}
+  .dash-bottom-grid{grid-template-columns:1fr !important}
+  .g2,.g3{grid-template-columns:1fr !important}
+}
 @media(max-width:900px){
-  .metrics{grid-template-columns:1fr 1fr}
-  .g2,.g3{grid-template-columns:1fr}
   .main{margin-right:0;padding:68px 16px 40px}
-  .sidebar{transform:translateX(100%)}
+  .sidebar{width:min(280px,85vw);transform:translateX(100%)}
   .sidebar.open{transform:translateX(0)}
   .mob-top{display:flex}
+  .close-sb-btn{display:inline-flex}
+  .action-menu{left:auto;right:0}
+}
+@media(max-width:600px){
+  .topbar{flex-direction:column;align-items:stretch;gap:10px}
+  .tb-right{flex-wrap:wrap;justify-content:flex-start;gap:6px}
+  .metrics{gap:10px}
+  .metric{padding:14px 15px;border-radius:15px}
+  .m-icon{width:32px;height:32px;font-size:16px;margin-bottom:8px}
+  .m-val{font-size:18px}
+  .m-sub{font-size:9.5px}
+  .card{padding:16px;border-radius:16px}
+  .card-title{font-size:12.5px;margin-bottom:12px}
+  .dash-chart-box{height:190px}
+  .dash-donut-box{height:190px}
+  .dash-footer{flex-direction:column;align-items:center;text-align:center;gap:6px}
+}
+@media(max-width:420px){
+  .metrics{gap:8px}
+  .metric{padding:12px 12px;border-radius:14px}
+  .m-val{font-size:17px}
+  .sr{font-size:11px;padding:8px 0}
+  .dash-chart-box{height:180px}
+  .dash-donut-box{height:180px}
+}
+@media(max-width:380px){
+  .metrics{grid-template-columns:1fr !important}
+  .main{padding:64px 10px 32px}
+  .card{padding:13px;border-radius:14px}
+  .tb-title{font-size:18px}
+  .badge{padding:4px 8px;font-size:9.5px}
+}
+@media(max-width:340px){
+  .main{padding:60px 8px 24px}
+  .sr{font-size:10px;padding:7px 0;gap:4px}
+  .sr-k{font-size:10px}
+  .tb-right{gap:4px}
+  .btn-sm{padding:4px 7px;font-size:10px}
 }
 </style>
 </head>
 <body>
 <div class="mob-top">
-  <div class="mob-logo"><i class="ti ti-shield-check" style="color:var(--accent)"></i> <a href="https://t.me/FilterGosha" target="_blank" style="color:inherit;text-decoration:none;">FilterGosha</a></div>
-  <button class="menu-btn" id="open-sb"><i class="ti ti-menu-2"></i></button>
+  <div class="mob-logo">
+    <div class="logo-img" style="width:28px;height:28px"><img src="/static/img/fg-logo.jpg" alt="FilterGosha"></div>
+    <a href="https://t.me/FilterGosha" target="_blank" style="color:inherit;text-decoration:none;">FilterGosha</a>
+  </div>
+  <button class="menu-btn" id="open-sb" title="باز کردن منو"><i class="ti ti-menu-2"></i></button>
 </div>
 <div class="overlay" id="overlay"></div>
 <aside class="sidebar" id="sb">
-  <button class="menu-btn" id="close-sb" style="position:absolute;left:10px;top:14px"><i class="ti ti-x"></i></button>
   <div class="logo">
-    <div class="logo-img"></div>
-    <div><div class="logo-name"><a href="https://t.me/FilterGosha" target="_blank">FilterGosha</a></div><div class="logo-sub">v1.4.13 · gRPC / WS / XHTTP / SOCKS</div></div>
+    <div class="logo-brand">
+      <div class="logo-img"><img src="/static/img/fg-logo.jpg" alt="FilterGosha"></div>
+      <div class="logo-text">
+        <div class="logo-name"><a href="https://t.me/FilterGosha" target="_blank">FilterGosha</a></div>
+        <div class="logo-sub">v1.4.13 · gRPC / WS / XHTTP</div>
+      </div>
+    </div>
+    <button class="menu-btn close-sb-btn" id="close-sb" title="بستن منو"><i class="ti ti-x"></i></button>
   </div>
   <div class="nav-wrap">
     <div class="nav-sec">پنل</div>
@@ -304,27 +383,27 @@ select.inp{appearance:none;cursor:pointer}
     </div>
   </div>
 
-  <div class="metrics" style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:16px">
+  <div class="metrics">
     <div class="metric"><div class="m-icon" style="background:rgba(239,68,68,0.12);color:#EF4444"><i class="ti ti-alert-triangle"></i></div><div class="m-label">خطاها</div><div class="m-val" id="m-errors" style="color:#EF4444">0</div><div class="m-sub">از راه‌اندازی</div></div>
     <div class="metric"><div class="m-icon" style="background:rgba(16,185,129,0.12);color:#34D399"><i class="ti ti-link"></i></div><div class="m-label">کانفیگ فعال</div><div class="m-val" id="m-alinks">0</div><div class="m-sub" id="m-lsub">از 0 کانفیگ</div></div>
     <div class="metric"><div class="m-icon" style="background:rgba(59,130,246,0.12);color:#60A5FA"><i class="ti ti-bolt"></i></div><div class="m-label">کل ترافیک</div><div class="m-val" id="m-traffic">0.0 MB</div><div class="m-sub">از راه‌اندازی</div></div>
     <div class="metric"><div class="m-icon" style="background:rgba(16,185,129,0.12);color:var(--accent)"><i class="ti ti-plug-connected"></i></div><div class="m-label">اتصالات فعال</div><div class="m-val" id="m-conns">0</div><div class="m-sub"><span class="dot dg pulse"></span> WebSocket / XHTTP زنده</div></div>
   </div>
 
-  <div style="display:grid;grid-template-columns:1fr 2fr;gap:14px;margin-bottom:16px">
+  <div class="dash-charts-grid">
     <div class="card" style="display:flex;flex-direction:column;justify-content:space-between">
       <div class="card-title"><i class="ti ti-chart-donut"></i> توزیع</div>
-      <div style="height:200px;position:relative;display:flex;align-items:center;justify-content:center">
+      <div class="dash-donut-box">
         <canvas id="ch-donut"></canvas>
       </div>
     </div>
     <div class="card">
       <div class="card-title"><i class="ti ti-chart-area-line"></i> ترافیک ساعتی (MB)</div>
-      <div style="height:200px"><canvas id="ch1"></canvas></div>
+      <div class="dash-chart-box"><canvas id="ch1"></canvas></div>
     </div>
   </div>
 
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+  <div class="dash-bottom-grid">
     <div class="card">
       <div class="card-title"><i class="ti ti-list-details"></i> خلاصه کانفیگ‌ها</div>
       <div id="dash-links-summary" style="display:flex;flex-direction:column;gap:10px;margin-top:8px">
@@ -345,7 +424,7 @@ select.inp{appearance:none;cursor:pointer}
   </div>
 
   <!-- DASHBOARD FOOTER -->
-  <div style="display:flex;justify-content:space-between;align-items:center;padding:16px 0;margin-top:20px;border-top:1px solid var(--card-b);font-size:11px;color:var(--t3)">
+  <div class="dash-footer">
     <div><a href="https://t.me/FilterGosha" target="_blank" style="color:var(--accent2);text-decoration:none"><i class="ti ti-brand-telegram"></i> t.me/FilterGosha</a></div>
     <div>FilterGosha v1.4.13 · Railway</div>
   </div>
@@ -543,6 +622,15 @@ select.inp{appearance:none;cursor:pointer}
       <div class="form-row">
         <div class="form-g"><label>محدودیت آی‌پی همزمان (0 = نامحدود)</label><input class="inp" type="number" id="sub-iplimit" value="0"></div>
         <div class="form-g"><label>محدودیت سرعت (0 = نامحدود)</label><input class="inp" type="number" step="0.1" id="sub-speed-val" value="0"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-g">
+          <label>محدودیت تعداد دستگاه / HWID (0 = نامحدود)</label>
+          <input class="inp" type="number" id="sub-hwidlimit" value="0">
+          <div style="font-size:10px;color:var(--t3);margin-top:4px" id="sub-hwid-info">
+            اولین دستگاه‌هایی که وصل شوند قفل می‌شوند؛ دستگاه جدید بعد از پر شدن سقف رد می‌شود. شناسه از روی User-Agent کلاینت یا هدر X-HWID ساخته می‌شود (روی WS/gRPC/XHTTP/Trojan؛ SOCKS5 معاف است).
+          </div>
+        </div>
       </div>
       <div class="form-row">
         <div class="form-g"><label>واحد سرعت</label><select class="inp" id="sub-speed-unit"><option value="MBIT">مگابیت/ثانیه (Mbps)</option><option value="KB">کیلوبایت/ثانیه (KB/s)</option></select></div>
@@ -787,9 +875,9 @@ select.inp{appearance:none;cursor:pointer}
                 <option value="tlshello,1-3">tlshello,1-3 (ترکیبی - بیشترین ضد فیلتر)</option>
               </select>
             </div>
-            <div class="form-g"><label>طول Fragment (Length)</label><input class="inp" id="nl-fg-len" value="10-20" placeholder="10-20"></div>
+            <div class="form-g"><label>طول Fragment (Length)</label><input class="inp" id="nl-fg-len" value="" placeholder="10-20"></div>
           </div>
-          <div class="form-g"><label>فاصله زمانی Fragment (Interval)</label><input class="inp" id="nl-fg-interval" value="10-20" placeholder="10-20"></div>
+          <div class="form-g"><label>فاصله زمانی Fragment (Interval)</label><input class="inp" id="nl-fg-interval" value="" placeholder="10-20"></div>
 
           <!-- MUX SECTION (hidden - not supported) -->
           <input type="hidden" id="nl-mux-enable" value="">
@@ -962,6 +1050,75 @@ function showQR(title, text){
   openModal('modal-qr');
 }
 
+function copyConfigLink(linkText){
+  if(!linkText) return;
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(linkText).then(()=>{
+      toast('لینک کانفیگ با موفقیت کپی شد ✓', 'ok');
+    }).catch(()=>{
+      _fallbackCopyLink(linkText);
+    });
+  } else {
+    _fallbackCopyLink(linkText);
+  }
+}
+function _fallbackCopyLink(text){
+  try {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    toast('لینک کانفیگ با موفقیت کپی شد ✓', 'ok');
+  } catch(e) {
+    toast('خطا در کپی لینک', 'err');
+  }
+}
+
+function toggleActionMenu(event, uuid){
+  if(event) event.stopPropagation();
+  const menu = document.getElementById('menu-' + uuid);
+  if(!menu) return;
+  const isCurrentlyOpen = menu.classList.contains('open');
+  closeActionMenus();
+  if(!isCurrentlyOpen){
+    menu.classList.add('open');
+    const rect = menu.getBoundingClientRect();
+    const card = menu.closest('.sub-card');
+    const cardRight = card ? card.getBoundingClientRect().right : window.innerWidth;
+    const cardLeft = card ? card.getBoundingClientRect().left : 0;
+    
+    if(rect.right > cardRight - 8 || rect.right > window.innerWidth - 8){
+      menu.style.right = '0';
+      menu.style.left = 'auto';
+    } else if(rect.left < cardLeft + 8 || rect.left < 8){
+      menu.style.left = '0';
+      menu.style.right = 'auto';
+    }
+  }
+}
+
+function closeActionMenus(){
+  document.querySelectorAll('.action-menu.open').forEach(m=>{
+    m.classList.remove('open');
+    m.style.left = '';
+    m.style.right = '';
+  });
+}
+
+document.addEventListener('click', e => {
+  if(!e.target.closest('.action-dropdown')){
+    closeActionMenus();
+  }
+});
+
+document.addEventListener('keydown', e => {
+  if(e.key === 'Escape') closeActionMenus();
+});
+
 // Navigation & Tab Switching
 const sb=document.getElementById('sb'),overlay=document.getElementById('overlay');
 function openSb(){sb.classList.add('open');overlay.classList.add('open')}
@@ -975,6 +1132,7 @@ function navTo(name){
   document.querySelectorAll('.pg').forEach(p=>p.classList.toggle('on',p.id==='pg-'+name));
   const loaders={overview:fetchStats,subs:loadSubs,links:loadLinks,connections:loadConns,settings:loadSettings,logs:loadActivity,errors:fetchStats};
   if(loaders[name])loaders[name]();
+  if(name==='overview'){try{if(ch1)ch1.resize();if(chDonut)chDonut.resize();}catch(e){}}
   closeSb();window.scrollTo({top:0,behavior:'smooth'});
 }
 document.querySelectorAll('.nav-it').forEach(el=>el.addEventListener('click',()=>navTo(el.dataset.pg)));
@@ -1341,12 +1499,12 @@ async function loadDashLinksSummary(){
       const used = fmtB(l.used_bytes);
       const stColor = l.active ? 'var(--green-t)' : 'var(--red-t)';
       return `
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:rgba(0,0,0,0.2);border:1px solid var(--card-b);border-radius:10px;font-size:11.5px">
-          <div style="display:flex;align-items:center;gap:6px">
-            <span style="color:${stColor}">●</span>
-            <strong>${esc(l.label)}</strong>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 12px;background:rgba(0,0,0,0.2);border:1px solid var(--card-b);border-radius:10px;font-size:11.5px">
+          <div style="display:flex;align-items:center;gap:6px;min-width:0;flex:1">
+            <span style="color:${stColor};flex-shrink:0">●</span>
+            <strong style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${esc(l.label)}">${esc(l.label)}</strong>
           </div>
-          <div style="font-size:11px;color:var(--t2)">
+          <div style="font-size:11px;color:var(--t2);white-space:nowrap;flex-shrink:0">
             <span style="color:var(--t1)">${used}</span> / <span style="color:var(--t3)">${lim}</span>
           </div>
         </div>
@@ -1641,6 +1799,19 @@ async function openSubModal(sid=''){
 
   document.getElementById('sub-iplimit').value = targetSub ? targetSub.ip_limit : 0;
   document.getElementById('sub-speed-val').value = targetSub ? (targetSub.speed_limit_bytes * 8 / 1024 / 1024).toFixed(1) : 0;
+  document.getElementById('sub-hwidlimit').value = targetSub ? (targetSub.hwid_limit || 0) : 0;
+  const hwidInfoEl = document.getElementById('sub-hwid-info');
+  if(hwidInfoEl){
+    const regCount = (targetSub && targetSub.hwids) ? Object.keys(targetSub.hwids).length : 0;
+    let extra = '';
+    if(targetSub){
+      extra = ` <b style="color:var(--accent)">دستگاه‌های ثبت‌شده: ${regCount}</b>`;
+      if(regCount > 0){
+        extra += ` — <a href="#" onclick="resetSubHwids('${esc(currentSubId)}');return false;" style="color:var(--red)">پاک‌کردن دستگاه‌ها</a>`;
+      }
+    }
+    hwidInfoEl.innerHTML = 'اولین دستگاه‌هایی که وصل شوند قفل می‌شوند؛ دستگاه جدید بعد از پر شدن سقف رد می‌شود. شناسه از روی User-Agent کلاینت یا هدر X-HWID ساخته می‌شود (روی WS/gRPC/XHTTP/Trojan؛ SOCKS5 معاف است).' + extra;
+  }
   document.getElementById('sub-note').value = targetSub ? targetSub.note : '';
   
   const chkEl = document.getElementById('sub-links-checklist');
@@ -1672,6 +1843,7 @@ document.getElementById('form-sub').addEventListener('submit',async e=>{
     ip_limit: parseInt(document.getElementById('sub-iplimit').value)||0,
     speed_limit_value: parseFloat(document.getElementById('sub-speed-val').value)||0,
     speed_limit_unit: document.getElementById('sub-speed-unit').value,
+    hwid_limit: parseInt(document.getElementById('sub-hwidlimit').value)||0,
     note: document.getElementById('sub-note').value.trim(),
     links: checkedUuids,
   };
@@ -1697,6 +1869,21 @@ async function deleteSub(sid){
     const r=await fetch('/api/subs/'+sid,{method:'DELETE'});
     if(r.ok){toast('اشتراک حذف شد','ok');loadSubs();}
   }catch(e){toast('خطا در حذف','err')}
+}
+
+async function resetSubHwids(sid){
+  if(!sid) return;
+  if(!confirm('همه‌ی دستگاه‌های ثبت‌شده‌ی این اشتراک پاک شوند؟ دفعه‌ی بعد که کاربر وصل شود، دستگاه‌هایش دوباره از نو ثبت می‌شوند.')) return;
+  try{
+    const r=await fetch('/api/subs/'+sid+'/reset_hwids',{method:'POST'});
+    if(r.ok){
+      toast('دستگاه‌های ثبت‌شده پاک شد ✓','ok');
+      const el=document.getElementById('sub-hwid-info');
+      if(el){ const i=el.innerHTML.indexOf('دستگاه‌های ثبت‌شده'); }
+      loadSubs();
+      closeModal('modal-sub');
+    } else { toast('خطا در پاک‌کردن دستگاه‌ها','err'); }
+  }catch(e){toast('خطا در ارتباط با سرور','err')}
 }
 
 // LINKS MANAGEMENT
@@ -1745,12 +1932,27 @@ function renderLinks(links){
               </div>
             </div>
           </div>
-          <div style="display:flex;gap:6px">
-            <button class="btn btn-sm btn-g" onclick="resetLinkUsage('${l.uuid}')" title="صفر کردن مصرف"><i class="ti ti-rotate"></i> ریست مصرف</button>
-            <button class="btn btn-sm btn-g" onclick="openLinkModal('${l.uuid}')"><i class="ti ti-edit"></i> ویرایش</button>
-            <button class="btn btn-sm btn-g" onclick="navigator.clipboard.writeText('${esc(l.vless_link)}').then(()=>toast('لینک VLESS کپی شد ✓','ok'))"><i class="ti ti-copy"></i> کپی لینک</button>
-            <button class="btn btn-sm btn-g" onclick="showQR('${esc(l.label)}', '${esc(l.vless_link)}')"><i class="ti ti-qrcode"></i> QR</button>
-            <button class="btn btn-sm btn-d" onclick="deleteLink('${l.uuid}')"><i class="ti ti-trash"></i></button>
+          <div style="display:flex;align-items:center;gap:6px">
+            <button class="btn btn-sm btn-g icon-action-btn" onclick="copyConfigLink('${esc(l.vless_link)}')" title="کپی لینک کانفیگ"><i class="ti ti-copy"></i></button>
+            <div class="action-dropdown">
+              <button class="btn btn-sm btn-g icon-action-btn" onclick="toggleActionMenu(event, '${esc(l.uuid)}')" title="عملیات بیشتر"><i class="ti ti-dots-vertical"></i></button>
+              <div class="action-menu" id="menu-${esc(l.uuid)}">
+                <button type="button" class="action-menu-item" onclick="openLinkModal('${l.uuid}'); closeActionMenus()">
+                  <i class="ti ti-edit"></i>
+                  <span>ویرایش کانفیگ</span>
+                </button>
+                <button type="button" class="action-menu-item" onclick="showQR('${esc(l.label)}', '${esc(l.vless_link)}'); closeActionMenus()">
+                  <i class="ti ti-qrcode"></i>
+                  <span>نمایش QR Code</span>
+                </button>
+                <div class="action-menu-divider"></div>
+                <button type="button" class="action-menu-item" onclick="resetLinkUsage('${l.uuid}'); closeActionMenus()">
+                  <i class="ti ti-rotate"></i>
+                  <span>ریست مصرف</span>
+                </button>
+              </div>
+            </div>
+            <button class="btn btn-sm btn-d icon-action-btn" onclick="deleteLink('${l.uuid}')" title="حذف کانفیگ"><i class="ti ti-trash"></i></button>
           </div>
         </div>
         <div style="margin-top:8px">
@@ -1845,8 +2047,8 @@ async function openLinkModal(uid=''){
   document.getElementById('nl-sni').value = targetLink ? (targetLink.sni || '') : '';
   document.getElementById('nl-host').value = targetLink ? (targetLink.host || '') : '';
   document.getElementById('nl-fg-packets').value = targetLink ? (targetLink.fragment_packets || '') : 'tlshello';
-  document.getElementById('nl-fg-len').value = targetLink ? (targetLink.fragment_length || '10-20') : '10-20';
-  document.getElementById('nl-fg-interval').value = targetLink ? (targetLink.fragment_interval || '10-20') : '10-20';
+  document.getElementById('nl-fg-len').value = targetLink ? (targetLink.fragment_length || '') : '';
+  document.getElementById('nl-fg-interval').value = targetLink ? (targetLink.fragment_interval || '') : '';
   document.getElementById('nl-mux-concurrency').value = 8;
   document.getElementById('nl-custom-uri').value = targetLink ? (targetLink.custom_uri || '') : '';
 
@@ -1969,6 +2171,7 @@ def get_public_page_html(uuid_key: str) -> str:
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>FilterGosha Sub</title>
+<link rel="icon" type="image/jpeg" href="/static/img/fg-logo.jpg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@100;200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -2061,7 +2264,7 @@ html,body{{min-height:100%;background:var(--bg);font-family:'Vazirmatn',sans-ser
 <div class="wrap">
   <div class="top">
     <div class="brand">
-      <div class="brand-img"></div>
+      <div class="brand-img"><img src="/static/img/fg-logo.jpg" alt="FilterGosha"></div>
       <div><div class="brand-name"><a href="https://t.me/FilterGosha" target="_blank">FilterGosha</a></div><div class="brand-sub">Secure Sub</div></div>
     </div>
   </div>

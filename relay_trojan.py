@@ -138,7 +138,7 @@ async def relay_tcp_to_ws(ws: WebSocket, reader: asyncio.StreamReader, conn_id: 
 async def trojan_ws_tunnel(ws: WebSocket, uuid: str):
     from main import (
         is_ip_allowed, logger, log_activity, connections, stats, error_logs,
-        save_state, check_and_use, SUBS,
+        save_state, check_and_use, SUBS, check_hwid_from_headers,
     )
     await ws.accept()
 
@@ -153,6 +153,12 @@ async def trojan_ws_tunnel(ws: WebSocket, uuid: str):
         logger.warning(f"🚫 Trojan rejected uuid={uuid[:8]}… ip={ip} (ip limit reached)")
         log_activity("connection", f"اتصال Trojan {ip} با شناسه {uuid[:8]} رد شد (محدودیت تعداد آی‌پی)", "warn")
         await ws.close(code=1008, reason="ip limit reached")
+        return
+
+    if not check_hwid_from_headers(uuid, ws.headers, ip):
+        logger.warning(f"🚫 Trojan rejected uuid={uuid[:8]}… ip={ip} (hwid limit reached)")
+        log_activity("connection", f"اتصال Trojan {ip} با شناسه {uuid[:8]} رد شد (محدودیت تعداد دستگاه)", "warn")
+        await ws.close(code=1008, reason="hwid limit reached")
         return
 
     conn_id = secrets.token_urlsafe(6)

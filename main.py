@@ -106,7 +106,8 @@ import random
 import string
 
 from fastapi import FastAPI, Request, HTTPException, Depends, WebSocket, UploadFile, File, Form
-from fastapi.responses import Response, HTMLResponse, JSONResponse, RedirectResponse
+from fastapi.responses import Response, HTMLResponse, JSONResponse, RedirectResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 import httpx
@@ -156,6 +157,18 @@ async def lifespan(app: FastAPI):
         await http_client.aclose()
 
 app = FastAPI(title="FilterGosha", docs_url=None, redoc_url=None, lifespan=lifespan)
+
+# ── Static Files & Favicon ────────────────────────────────────────────────────
+STATIC_DIR = Path(__file__).parent / "app" / "static"
+if STATIC_DIR.exists():
+    app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
+
+@app.get("/favicon.ico", include_in_schema=False)
+async def favicon():
+    fav = STATIC_DIR / "img" / "fg-logo.jpg"
+    if fav.exists():
+        return FileResponse(fav, media_type="image/jpeg")
+    return Response(status_code=404)
 
 # ── Persistence ───────────────────────────────────────────────────────────────
 def resolve_data_dir() -> Path:
@@ -431,6 +444,8 @@ async def load_state():
                     "ip_limit": 0,
                     "speed_limit_bytes": 0,
                     "note": "اشتراک پیش‌فرض ایجادشده توسط سیستم",
+                    "hwid_limit": 0,
+                    "hwids": {},
                     "links": created_link_ids,
                 }
 
@@ -1123,6 +1138,98 @@ def get_speed_limit(uid: str) -> int:
     if link:
         return link.get("speed_limit_bytes", 0)
     return 0
+
+# ── HWID (شناسه‌ی دستگاه) ────────────────────────────────────────────────────────
+# نکته‌ی مهم و صادقانه: پروتکل‌های VLESS/Trojan/SOCKS5 هیچ «شناسه‌ی سخت‌افزاری»
+# واقعی از دستگاه کلاینت نمی‌فرستند. تنها سیگنالِ در دسترسِ سمت سرور برای تفکیک
+# «دستگاه» (نه فقط آی‌پی) این‌هاست:
+#   ۱) هدر صریح X-HWID (اگر یک کلاینت سفارشی آن را بفرستد) — دقیق‌ترین حالت.
+#   ۲) در غیر این صورت، هشِ User-Agent (روی ترابردهای HTTP: WS/gRPC/XHTTP/Trojan-WS).
+# SOCKS5 خام هیچ هدری ندارد، پس آنجا HWID قابل‌اعمال نیست و معاف است.
+#
+# سیاست سقف: اولین N دستگاهِ دیده‌شده به اشتراک «بایند» می‌شوند؛ همان‌ها همیشه وصل
+# می‌شوند، ولی دستگاهِ (N+1)اُمِ جدید رد می‌شود — دقیقاً مثل رفتار HWID limit در
+# پنل‌های مشابه.
+HWID_HEADER = "x-hwid"
+
+def _header_get(headers, name: str) -> str | None:
+    """خواندن یک هدر به‌صورت غیرحساس به بزرگی/کوچکی حروف از انواع mapping هدر."""
+    if headers is None:
+        return None
+    try:
+        val = headers.get(name)
+        if val:
+            return val
+    except Exception:
+        pass
+    low = name.lower()
+    try:
+        for k, v in headers.items():
+            if str(k).lower() == low and v:
+                return v
+    except Exception:
+        pass
+    return None
+
+def extract_hwid(headers) -> str | None:
+    """یک شناسه‌ی دستگاهِ پایدار از روی هدرهای اتصال می‌سازد.
+    اولویت با هدر صریح X-HWID است؛ در غیر این صورت از User-Agent استفاده می‌شود.
+    خروجی یک رشته‌ی کوتاه و پایدار است، یا None اگر هیچ سیگنالی نباشد (مثل SOCKS5)."""
+    explicit = _header_get(headers, HWID_HEADER)
+    if explicit and explicit.strip():
+        digest = hashlib.sha256(explicit.strip().encode("utf-8", "ignore")).hexdigest()
+        return "id:" + digest[:16]
+    ua = _header_get(headers, "user-agent")
+    if ua and ua.strip():
+        digest = hashlib.sha256(ua.strip().encode("utf-8", "ignore")).hexdigest()
+        return "ua:" + digest[:16]
+    return None
+
+def _hwid_record(uid: str) -> dict | None:
+    """رکورد (اشتراک یا کانفیگ) مربوط به یک شناسه را برمی‌گرداند."""
+    sub = SUBS.get(uid)
+    if sub is not None:
+        return sub
+    return LINKS.get(uid)
+
+def is_hwid_allowed(uid: str, hwid: str | None, *, ip: str = "", ua: str = "") -> bool:
+    """بررسی و ثبتِ HWID. اگر دستگاه قبلاً ثبت شده باشد یا ظرفیت خالی باشد ثبت و
+    مجاز می‌شود؛ اگر سقف پر باشد و دستگاه جدید باشد رد می‌شود.
+    این تابع sync است و بدون await اجرا می‌شود، پس روی event loop اتمیک است."""
+    if not hwid:
+        return True  # دستگاه قابل‌شناسایی نیست (مثلاً SOCKS5) → مسدود نمی‌کنیم
+    rec = _hwid_record(uid)
+    if rec is None:
+        return True
+    limit = int(rec.get("hwid_limit", 0) or 0)
+    hwids = rec.get("hwids")
+    if not isinstance(hwids, dict):
+        hwids = {}
+        rec["hwids"] = hwids
+    now = datetime.now().isoformat()
+    if hwid in hwids:
+        hwids[hwid]["last_seen"] = now
+        if ip:
+            hwids[hwid]["ip"] = ip
+        return True
+    # دستگاه جدید است
+    if limit > 0 and len(hwids) >= limit:
+        return False
+    hwids[hwid] = {"first_seen": now, "last_seen": now, "ip": ip, "ua": (ua or "")[:120]}
+    try:
+        asyncio.get_running_loop()
+        asyncio.create_task(save_state())
+    except RuntimeError:
+        pass  # خارج از event loop (مثلاً داخل تست) — ذخیره‌سازی را رد می‌کنیم
+    except Exception:
+        pass
+    return True
+
+def check_hwid_from_headers(uid: str, headers, ip: str = "") -> bool:
+    """راحتی‌سازِ استفاده در هندلرها: HWID را از هدر استخراج و بررسی می‌کند."""
+    hwid = extract_hwid(headers)
+    ua = _header_get(headers, "user-agent") or ""
+    return is_hwid_allowed(uid, hwid, ip=ip, ua=ua)
 
 def client_ip(request: Request) -> str:
     host = request.client.host if request.client else None
@@ -2146,6 +2253,8 @@ async def create_sub(request: Request, _=Depends(require_auth)):
     except: sv = 0
     su = body.get("speed_limit_unit") or "MBIT"
     speed_limit_bytes = 0 if sv <= 0 else parse_speed_to_bytes(sv, su)
+    try: hwid_limit = int(body.get("hwid_limit") or 0)
+    except: hwid_limit = 0
     sub_id = generate_uuid()
     sub_username = "".join(random.choices(string.ascii_lowercase + string.digits, k=6))
     
@@ -2160,6 +2269,8 @@ async def create_sub(request: Request, _=Depends(require_auth)):
             "active": True,
             "ip_limit": max(0, ip_limit),
             "speed_limit_bytes": speed_limit_bytes,
+            "hwid_limit": max(0, hwid_limit),
+            "hwids": {},
             "note": str(body.get("note") or "")[:200],
             "links": body.get("links", []) if isinstance(body.get("links"), list) else [],
         }
@@ -2226,6 +2337,14 @@ async def update_sub(sid: str, request: Request, _=Depends(require_auth)):
             try: il = int(body.get("ip_limit") or 0)
             except: il = 0
             sub["ip_limit"] = max(0, il)
+
+        if "hwid_limit" in body:
+            try: hl = int(body.get("hwid_limit") or 0)
+            except: hl = 0
+            sub["hwid_limit"] = max(0, hl)
+
+        if "reset_hwids" in body and body["reset_hwids"]:
+            sub["hwids"] = {}
 
         if "speed_limit_value" in body:
             sv = float(body.get("speed_limit_value") or 0)
@@ -2297,6 +2416,17 @@ async def reset_sub_usage(sid: str, _=Depends(require_auth)):
         label = SUBS[sid].get("label", sid)
     asyncio.create_task(save_state())
     log_activity("sub", f"مصرف اشتراک «{label}» صفر (ریست) شد", "ok")
+    return {"ok": True}
+
+@app.post("/api/subs/{sid}/reset_hwids")
+async def reset_sub_hwids(sid: str, _=Depends(require_auth)):
+    async with SUBS_LOCK:
+        if sid not in SUBS:
+            raise HTTPException(status_code=404, detail="sub not found")
+        SUBS[sid]["hwids"] = {}
+        label = SUBS[sid].get("label", sid)
+    asyncio.create_task(save_state())
+    log_activity("sub", f"دستگاه‌های ثبت‌شده‌ی اشتراک «{label}» پاک شد", "ok")
     return {"ok": True}
 
 @app.post("/api/links/{uid}/reset_usage")
